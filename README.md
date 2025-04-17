@@ -23,23 +23,21 @@ Steps to Run Locally:
 ![WhatsApp Image 2025-04-17 at 16 38 30_1436e82c](https://github.com/user-attachments/assets/63f80fd4-9472-411a-983f-c20dd55d9bd4)
 
   This is an interactive Tree Visualizer for:
-    ✅ Binary Search Tree (BST)
-    ✅ AVL Tree (self-balancing BST)  
-
-
+    ✅ Binary Search Tree
+    ✅ AVL Tree 
 
   💡 Features Available on Your Local Browser:
-      1.🔄 Insert keys dynamically
-      2.❌ Delete nodes from the tree
-      3.🔍 Search any key with visual animation
-      4.👁 Visualize tree structure using D3.js
-      5.📊 Run Traversals with animations:    
+      1. Insert keys dynamically
+      2. Delete nodes from the tree
+      3. Search any key with visual animation
+      4. Visualize tree structure using D3.js
+      5. Run Traversals with animations:    
         1.Inorder
         2.Preorder
         3.Postorder
         4.Level-order    
-      6.🌗 Toggle Dark Mode
-      7.🧩 Fully syncs with the Python backend in real-time
+      6. Toggle Dark Mode
+      7. Fully syncs with the Python backend in real-time
 
 
 
