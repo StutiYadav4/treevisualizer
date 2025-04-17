@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tree Visualizer</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <style>
+        :root {
+            --bg-color: white;
+            --text-color: black;
+            --btn-bg: pink;
+            --btn-hover: lightcoral;
+            --link-color: black;
+            --heading-color: black;
+        }
+
+        .dark-mode {
+            --bg-color: black;
+            --text-color: black;
+            --link-color: black;
+            --heading-color:white;
+            background: black
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background 0.3s, color 0.3s;
+        }
+
+        h2 {
+            color: var(--heading-color);
+        }
+
+       
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to right,
+            #34a0ed 10%, 
+            #c8e6ee 40%, 
+            #ade5ee 50%, 
+            #81dfea 75%, 
+            #0da7ef 100%);
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .tree-container {
+            max-width: 1000px;
+            margin: auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1, h2 {
+            text-align: center;
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 18px;
+            border: 1px solid #ddd;
+            border-radius: 15px;
+            font-size: 13px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            width: 200px;
+            z-index: 1000;
+        }
+
+        .sidebar h3 {
+            margin-top: 0;
+            font-size: 16px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+        }
+
+        .legend-color {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .legend-color.root {
+            background-color: rgb(163, 233, 193);
+        }
+
+        .legend-color.left {
+            background-color: rgb(156, 223, 245);
+        }
+
+        .legend-color.right {
+            background-color: rgb(245, 184, 85);
+        }
+
+        hr {
+            margin: 10px 0;
+            border: none;
+            border-top: 1px solid #ccc;
+        }
+
+        .tree-info h4 {
+            margin: 5px 0 8px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .tree-info p {
+            margin: 4px 0;
+            font-size: 12px;
+        }       
+
+        .button-container {
+            margin: 20px;
+        }
+
+        button {
+            background-color: var(--btn-bg);
+            color: black;
+            border: none;
+            padding: 10px 15px;
+            margin: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background-color: var(--btn-hover);
+        }
+
+        .node circle {
+            fill: steelblue;
+            stroke: black;
+            stroke-width: 2px;
+        }
+
+        .node text {
+            font-size: 14px;
+            fill: black;
+            text-anchor: middle;
+        }
+
+        .link {
+            fill: none;
+            stroke: var(--link-color);
+            stroke-width: 2px;
+        }
+
+        .node circle.highlighted {
+            filter: drop-shadow(0px 0px 8px rgba(255, 255, 0, 0.8));
+        }
+
+        /* For improved button states */
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        /* Status messages */
+        .status-message {
+            padding: 8px;
+            margin: 10px 0;
+            border-radius: 4px;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .success-message {
+            background-color: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4CAF50;
+            color: #2E7D32;
+        }
+
+        .error-message {
+            background-color: rgba(244, 67, 54, 0.2);
+            border: 1px solid #F44336;
+            color: #C62828;
+        }
+
+        /* Node transitions */
+        .node circle {
+            transition: fill 0.3s, stroke 0.3s, stroke-width 0.3s;
+        }
+
+        /* Simple fade animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        /* Container for status messages */
+        .message-container {
+            min-height: 40px;
+            margin: 10px 0;
+        }
+
+        /* Improve input fields */
+        input[type="number"] {
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            transition: border-color 0.3s;
+        }
+
+        input[type="number"]:focus {
+            border-color: var(--btn-bg);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(255, 192, 203, 0.3);
+        }
+
+        /* Responsive improvements */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .info-panel {
+                margin-left: 0;
+                margin-top: 20px;
+                width: 100%;
+            }
+            
+            svg {
+                max-width: 100%;
+                height: auto;
+            }
+        }
+
+
+                /* Status messages latest */
+                
+        .status-message {
+            padding: 8px 12px;
+            margin: 10px 0;
+            border-radius: 4px;
+            animation: fadeIn 0.3s ease-in;
+            font-weight: 500;
+        }
+
+        .success-message {
+            background-color: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4CAF50;
+            color: #2E7D32;
+        }
+
+        .error-message {
+            background-color: rgba(244, 67, 54, 0.2);
+            border: 1px solid #F44336;
+            color: #C62828;
+        }
+
+        /* Container for status messages */
+        .message-container {
+            min-height: 40px;
+            margin: 10px 0;
+            width: 100%;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h2>Tree Visualizer</h2>
+
+    <div class="button-container">              
+        <button onclick="toggleDarkMode()">Toggle Dark Mode</button>
+        <div style="margin-bottom: 20px;">
+            <select id="treeTypeSelect">
+                <option value="bst">Binary Search Tree</option>
+                <option value="avl">AVL Tree</option>
+            </select>
+            <button onclick="initializeTree()">Initialize New Tree</button>
+            <div id="initStatus" class="message-container"></div>
+        </div> 
+        <!-- Combined Search + Delete in One Row -->
+        <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; margin-bottom: 10px;">
+            <div>
+                <input type="number" id="searchKeyInput" placeholder="Enter key to search:" />
+                <button onclick="searchKey()">Search Key</button>
+            </div>
+            <div>
+                <input type="number" id="deleteKey" placeholder="Enter key to delete:" />
+                <button onclick="deleteKey()">Delete</button>
+            </div>
+        </div>
+
+        <!-- Status Messages below -->
+        <div style="text-align: center; margin-bottom: 20px;">
+            <p id="searchResult"></p>
+            <div id="deleteStatus" class="message-container"></div>
+        </div>
+
+        <div class="button-container">
+            <button onclick="startTraversal('inorder')">Inorder</button>
+            <button onclick="startTraversal('preorder')">Preorder</button>
+            <button onclick="startTraversal('postorder')">Postorder</button>
+            <button onclick="startTraversal('levelorder')">Level Order</button>
+            <div id="traversalResult" class="message-container"></div>
+        </div>          
+        
+    </div>
+
+    <!-- Sidebar Box for Legend & Tree Info -->
+    <div class="sidebar">
+        <h3>Legend</h3>
+        <div class="legend-item"><span class="legend-color root"></span> Root Node</div>
+        <div class="legend-item"><span class="legend-color left"></span> Left Child</div>
+        <div class="legend-item"><span class="legend-color right"></span> Right Child</div>
+
+        <hr>
+
+        <div class="tree-info">
+            <h4>Tree Information</h4>
+            <p><strong>Type:</strong> <span id="tree-type">-</span></p>
+            <p><strong>Inserted Keys:</strong> <span id="inserted-keys">-</span></p>
+        </div>
+    </div>
+
+    
+    
+    <div class="container">
+        <!-- Tree Visualization -->
+        <div class="tree-container">
+            <svg width="800" height="600"></svg>
+        </div>
+    </div>
+
+    <script>
+        function toggleDarkMode() {
+            document.body.classList.toggle("dark-mode");
+        }
+
+        function loadTree() {
+            const statusElement = document.getElementById("deleteStatus");
+
+            fetch("tree.json")
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Failed to load tree.json");
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("Loaded Tree:", data);
+                    
+                    // Map shorthand types to full names
+                    const typeMap = {
+                        bst: "Binary Search Tree",
+                        avl: "AVL Tree",                        
+                    };
+
+                    // Display full type
+                    if (document.getElementById("tree-type")) {
+                        const fullType = (!data.tree || Object.keys(data.tree).length === 0)
+                            ? "None"
+                            : typeMap[data.type?.toLowerCase()] || "Unknown Tree";
+
+                        document.getElementById("tree-type").textContent = fullType;
+                    }
+
+                    // Set dropdown to match tree type from data
+                    const treeSelect = document.getElementById("treeTypeSelect");
+                    if (treeSelect && data.type) {
+                        treeSelect.value = data.type.toLowerCase();
+                    }
+
+
+
+                    // Display inserted keys
+                    if (document.getElementById("inserted-keys")) {
+                        const keys = Array.isArray(data.insertedKeys) && data.insertedKeys.length > 0
+                            ? data.insertedKeys.join(", ")
+                            : "None";
+                        document.getElementById("inserted-keys").textContent = keys;
+                    }
+                    
+                    // Check if tree exists and visualize it
+                    if (data.tree) {
+                        visualizeTree(data.tree);
+                    } else {
+                        // Show empty tree visualization
+                        const svg = d3.select("svg");
+                        svg.selectAll("*").remove();
+                        svg.append("text")
+                            .attr("x", svg.attr("width") / 2)
+                            .attr("y", svg.attr("height") / 2)
+                            .attr("text-anchor", "middle")
+                            .text("Empty Tree - Ready for insertions")
+                            .style("font-size", "18px")
+                            .style("fill", "gray");
+                    }
+                })
+                .catch(error => {
+                    console.error("Load Tree Error:", error);
+                    if (statusElement) {
+                        statusElement.innerHTML = '<div class="status-message error-message">❌ Failed to load tree: ' + error.message + '</div>';
+                    }
+                });
+        }
+
+
+        function visualizeTree(treeData) {
+            if (!treeData || !treeData.key) {
+                console.error("Invalid tree data:", treeData);
+                return;
+            }
+            
+            // Ensure we have an appropriate SVG size
+            const width = 800, height = 800;
+            const svg = d3.select("svg")
+                .attr("width", width)
+                .attr("height", height);
+            svg.selectAll("*").remove();
+
+            // If the tree is empty (e.g., after deleting the last node)
+            if (!treeData.key) {
+                svg.append("text")
+                    .attr("x", width / 2)
+                    .attr("y", height / 2)
+                    .attr("text-anchor", "middle")
+                    .text("Empty Tree")
+                    .style("font-size", "24px")
+                    .style("fill", "gray");
+                return;
+            }
+            
+            // Center the tree with more space - adjusted for better centering
+            const g = svg.append("g")
+                .attr("transform", `translate(${width / 2}, 100)`);
+            
+            const nodeRadius = 20;
+            const verticalSpace = 70;  // Vertical spacing between levels
+            
+            // Helper function to determine tree depth
+            function getTreeDepth(node) {
+                if (!node) return 0;
+                return 1 + Math.max(
+                    node.left ? getTreeDepth(node.left) : 0,
+                    node.right ? getTreeDepth(node.right) : 0
+                );
+            }
+            
+            const treeDepth = getTreeDepth(treeData);
+            
+            // First pass: Identify node types (left or right child)
+            function identifyNodeTypes(node, isLeft = false, isRight = false) {
+                if (!node) return null;
+                
+                node.isLeft = isLeft;
+                node.isRight = isRight;
+                
+                if (node.left) {
+                    identifyNodeTypes(node.left, true, false);
+                }
+                
+                if (node.right) {
+                    identifyNodeTypes(node.right, false, true);
+                }
+            }
+            
+            identifyNodeTypes(treeData);
+            
+            // Compute x,y coordinates for each node - MODIFIED for better horizontal distribution
+            function computeNodePositions(node, level = 0, nodes = []) {
+                if (!node) return nodes;
+                
+                // Use the level for vertical positioning
+                const y = level * verticalSpace;
+                
+                // For the root node, x is 0 (center)
+                let x = 0;
+                
+                // For non-root nodes, adjust position based on parent and level
+                if (level > 0) {
+                    // Calculate a horizontal offset that decreases with depth
+                    const horizontalOffset = 120 / (level * 0.9);
+                    
+                    if (node.isLeft) {
+                        x = node.parent.x - horizontalOffset; // Left children go left
+                    } else {
+                        x = node.parent.x + horizontalOffset; // Right children go right
+                    }
+                }
+                
+                // Save computed coordinates
+                node.x = x;
+                node.y = y;
+                nodes.push(node);
+                
+                // Process children
+                if (node.left) {
+                    node.left.parent = node;
+                    computeNodePositions(node.left, level + 1, nodes);
+                }
+                
+                if (node.right) {
+                    node.right.parent = node;
+                    computeNodePositions(node.right, level + 1, nodes);
+                }
+                
+                return nodes;
+            }
+            
+            // Compute positions and get flat list of nodes
+            const nodes = computeNodePositions(treeData);
+            
+            // Prepare links data
+            const links = nodes.filter(n => n.parent).map(n => ({
+                source: n.parent,
+                target: n,
+                isLeftChild: n.isLeft,
+                isRightChild: n.isRight
+            }));
+            
+            // Draw links first so they're behind nodes
+            g.selectAll(".link")
+                .data(links)
+                .enter()
+                .append("line")
+                .attr("class", "link")
+                .attr("x1", d => d.source.x)
+                .attr("y1", d => d.source.y + nodeRadius/2)
+                .attr("x2", d => d.target.x)
+                .attr("y2", d => d.target.y - nodeRadius/2)
+                .attr("stroke", "#555")
+                .attr("stroke-width", 2);
+            
+            // Draw nodes
+            const nodeGroups = g.selectAll(".node")
+                .data(nodes)
+                .enter()
+                .append("g")
+                .attr("class", "node")
+                .attr("transform", d => `translate(${d.x}, ${d.y})`);
+            
+            // Draw circles for nodes
+            nodeGroups.append("circle")
+                .attr("r", nodeRadius)
+                .style("fill", d => {
+                    if (!d.parent) return "#a3e9c1"; // Root node: green
+                    if (d.isLeft) return "#9cdff5";  // Left child: blue
+                    return "#f5b855";                // Right child: brown
+                })
+                .style("stroke", "#FFF")
+                .style("stroke-width", 2);
+            
+            // Add text labels
+            nodeGroups.append("text")
+                .attr("dy", "0.35em")
+                .attr("text-anchor", "middle")
+                .text(d => d.key)
+                .style("fill", "white")
+                .style("font-size", "14px")
+                .style("font-weight", "bold");
+        }
+
+        // Modify your searchKey function to better handle errors
+        function searchKey() {
+            const keyInput = document.getElementById("searchKeyInput").value.trim();
+            const key = parseInt(keyInput);
+            const resultEl = document.getElementById("searchResult");
+
+            if (isNaN(key)) {
+                resultEl.textContent = "Please enter a valid number!";
+                resultEl.style.color = "red";
+                return;
+            }
+
+            // Show searching state
+            resultEl.textContent = "Searching...";
+            resultEl.style.color = "blue";
+
+            console.log("Sending search request for key:", key);
+            
+            fetch("http://127.0.0.1:5000/search", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ key: key })
+            })
+            .then(res => {
+                console.log("Response status:", res.status);
+                if (!res.ok) {
+                    return res.json().then(errorData => {
+                        throw new Error(errorData.error || `Server error: ${res.status}`);
+                    });
+                }
+                return res.json();
+            })
+            .then(data => {
+                if (data.found) {
+                    resultEl.textContent = `The key ${data.key} was found at level ${data.level} and its parent is ${data.parent}.`;
+                    resultEl.style.color = "green";
+
+                    const path = data.path || [];
+
+                    const svg = d3.select("svg");
+
+                    // Animate nodes along the path
+                    (async () => {
+                        for (let key of path) {
+                            svg.selectAll(".node circle")
+                                .filter(d => d.key === key)
+                                .transition()
+                                .duration(300)
+                                .style("fill", "yellow")
+                                .transition()
+                                .duration(300)
+                                .style("fill", d => {
+                                    if (!d.parent) return "#a3e9c1"; // Root node: green
+                                    if (d.isLeft) return "#9cdff5";  // Left child: blue
+                                    return "#f5b855";                // Right child: brown
+                                });
+
+                            await new Promise(r => setTimeout(r, 600));
+                        }
+                    })();
+                } else {
+                    resultEl.textContent = `Key ${data.key} not found.`;
+                    resultEl.style.color = "red";
+                }
+            })
+        }
+
+        async function deleteKey() {
+            const keyInput = document.getElementById("deleteKey");
+            const key = keyInput.value;
+            const statusElement = document.getElementById("deleteStatus");
+            
+            if (!key) {
+                statusElement.innerHTML = '<div class="status-message error-message">Please enter a key to delete</div>';
+                return;
+            }
+            
+            try {
+                console.log(`Attempting to delete key: ${key}`);
+                statusElement.innerHTML = '<div class="status-message">Processing deletion of key ' + key + '...</div>';
+                
+                const response = await fetch("http://127.0.0.1:5000/delete", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ key: parseInt(key) })
+                });
+                
+                console.log(`Server response status: ${response.status}`);
+                
+                const data = await response.json().catch(e => ({ 
+                    success: false, 
+                    error: "Could not parse server response" 
+                }));
+                
+                console.log("Server response data:", data);
+                
+                if (data.success) {
+                    // Show success message
+                    statusElement.innerHTML = '<div class="status-message success-message">✅ Key ' + key + ' deleted successfully. Tree updated!</div>';
+                    
+                    // Add a small delay to ensure file writing is complete
+                    setTimeout(() => {
+                        // Load the tree without refreshing the page
+                        fetch("tree.json")
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error("Failed to load tree.json");
+                                }
+                                return response.json();
+                            })
+                            .then(data => {
+                                console.log("Loaded Tree:", data);
+                                visualizeTree(data.tree);
+                            })
+                            .catch(error => {
+                                console.error("Load Tree Error:", error);
+                                statusElement.innerHTML = '<div class="status-message error-message">❌ Failed to reload tree: ' + error.message + '</div>';
+                            });
+                    }, 500);
+                    
+                    // Keep the status message visible for 5 seconds
+                    setTimeout(() => {
+                        // Only clear if it still shows our success message (could have been replaced by an error)
+                        if (statusElement.innerHTML.includes("deleted successfully")) {
+                            statusElement.innerHTML = '';
+                        }
+                    }, 5000);
+                } else {
+                    statusElement.innerHTML = '<div class="status-message error-message">❌ Error: ' + 
+                        (data.error || "Unknown error occurred") + '</div>';
+                }
+            } catch (err) {
+                console.error("Delete error details:", err);
+                statusElement.innerHTML = '<div class="status-message error-message">❌ Failed to delete: ' + 
+                    err.message + '</div>';
+            }
+        }
+
+
+        async function insertKey() {
+            const keyInput = document.getElementById("insertKey");
+            const key = keyInput.value;
+            const statusElement = document.getElementById("insertStatus");
+            
+            if (!key) {
+                statusElement.innerHTML = '<div class="status-message error-message">Please enter a key to insert</div>';
+                return;
+            }
+            
+            try {
+                console.log(`Attempting to insert key: ${key}`);
+                statusElement.innerHTML = '<div class="status-message">Processing insertion of key ' + key + '...</div>';
+                
+                // 1. First, fetch the current tree structure
+                const currentTreeResponse = await fetch("tree.json");
+                const currentTreeData = await currentTreeResponse.json();
+                const originalTree = JSON.parse(JSON.stringify(currentTreeData.tree)); // Deep copy
+                
+                // 2. Make the insertion request to your server
+                const response = await fetch("http://127.0.0.1:5000/insert", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ key: parseInt(key) })
+                });
+                
+                const data = await response.json().catch(e => ({ 
+                    success: false, 
+                    error: "Could not parse server response" 
+                }));
+                
+                console.log("Server response data:", data);
+                
+                if (data.success) {
+                    // 3. Get the updated tree after insertion
+                    const updatedTreeResponse = await fetch("tree.json");
+                    const updatedTreeData = await updatedTreeResponse.json();
+                    
+                    // 4. Run the insertion animation
+                    await animateInsertion(originalTree, updatedTreeData.tree, parseInt(key));
+                    
+                    // Show success message
+                    statusElement.innerHTML = '<div class="status-message success-message">✅ Key ' + key + ' inserted successfully!</div>';
+                    
+                    // Update tree info after successful insertion
+                    if (document.getElementById("inserted-keys")) {
+                        const updatedKeys = updatedTreeData.insertedKeys.join(", ");
+                        document.getElementById("inserted-keys").textContent = updatedKeys;
+                    }
+                    
+                    // Clear the input field
+                    keyInput.value = '';
+                    
+                    // Keep the status message visible for 5 seconds
+                    setTimeout(() => {
+                        if (statusElement.innerHTML.includes("inserted successfully")) {
+                            statusElement.innerHTML = '';
+                        }
+                    }, 5000);
+                } else {
+                    statusElement.innerHTML = '<div class="status-message error-message">❌ Error: ' + 
+                        (data.error || "Unknown error occurred") + '</div>';
+                }
+            } catch (err) {
+                console.error("Insert error details:", err);
+                statusElement.innerHTML = '<div class="status-message error-message">❌ Failed to insert: ' + 
+                    err.message + '</div>';
+            }
+        }
+
+        // Animation function for insertion
+        async function animateInsertion(originalTree, updatedTree, insertedKey) {
+            // First, draw the original tree
+            visualizeTree(originalTree);
+            
+            // Create a temporary node that will travel to its insertion point
+            const svg = d3.select("svg");
+            const g = svg.select("g");
+            
+            // Create a temporary node at the top of the tree
+            const tempNode = g.append("g")
+                .attr("class", "temp-node")
+                .attr("transform", `translate(0, -50)`);
+            
+            tempNode.append("circle")
+                .attr("r", 20)
+                .style("fill", "yellow")
+                .style("stroke", "black")
+                .style("stroke-width", 2);
+            
+            tempNode.append("text")
+                .attr("dy", "0.35em")
+                .attr("text-anchor", "middle")
+                .text(insertedKey)
+                .style("fill", "black")
+                .style("font-size", "14px")
+                .style("font-weight", "bold");
+            
+            // Function to find the path of the new node based on tree traversal
+            function findInsertionPath(tree, key, path = [], coords = []) {
+                if (!tree) return { path, coords };
+                
+                path.push(tree.key);
+                coords.push({ x: tree.x || 0, y: tree.y || 0 });
+                
+                if (key < tree.key && tree.left) {
+                    return findInsertionPath(tree.left, key, path, coords);
+                } else if (key > tree.key && tree.right) {
+                    return findInsertionPath(tree.right, key, path, coords);
+                }
+                
+                return { path, coords };
+            }
+            
+            // Find path from root to insertion position
+            const { path, coords } = findInsertionPath(originalTree, insertedKey);
+            
+            // Add final position coordinates where the new node will be placed
+            let finalX = 0, finalY = 0;
+            
+            // Compute final position based on the last node in path
+            if (path.length > 0) {
+                const lastNodeKey = path[path.length - 1];
+                const lastNodeX = coords[coords.length - 1].x;
+                const lastNodeY = coords[coords.length - 1].y;
+                
+                // Determine if new node will be left or right child
+                if (insertedKey < lastNodeKey) {
+                    finalX = lastNodeX - 60; // Left child
+                } else {
+                    finalX = lastNodeX + 60; // Right child
+                }
+                finalY = lastNodeY + 70; // One level down
+            }
+            
+            coords.push({ x: finalX, y: finalY });
+            
+            // Animate along the path
+            for (let i = 0; i < coords.length; i++) {
+                await new Promise(resolve => {
+                    tempNode.transition()
+                        .duration(500)
+                        .attr("transform", `translate(${coords[i].x}, ${coords[i].y})`)
+                        .on("end", resolve);
+                });
+                
+                // Highlight the current node in the path (except the last one which is the insertion point)
+                if (i < coords.length - 1) {
+                    // Flash the node we're visiting
+                    g.selectAll(".node circle")
+                        .filter(d => d.key === path[i])
+                        .classed("highlighted", true)
+                        .transition()
+                        .duration(300)
+                        .style("fill", "orange")
+                        .transition()
+                        .duration(300)
+                        .style("fill", function(d) {
+                            if (!d.parent) return "#90EE90"; // Root node
+                            if (d.isLeft) return "#ADD8E6";  // Left child
+                            return "#F4A460";                // Right child
+                        })
+                        .on("end", function() {
+                            d3.select(this).classed("highlighted", false);
+                        });
+                    
+                    // Pause a bit at each node
+                    await new Promise(resolve => setTimeout(resolve, 600));
+                }
+            }
+            
+            // Final "pop" animation for insertion
+            tempNode.select("circle")
+                .transition()
+                .duration(300)
+                .attr("r", 25)
+                .transition()
+                .duration(300)
+                .attr("r", 20);
+            
+            // After animation completes, redraw the tree with the updated structure
+            await new Promise(resolve => setTimeout(resolve, 800));
+            tempNode.remove();
+            visualizeTree(updatedTree);
+        }
+
+        // Function to create insertion form input
+        function setupInsertionForm() {
+            const buttonContainer = document.querySelector('.button-container');
+            
+            // Create insertion form if it doesn't exist
+            if (!document.getElementById('insertionForm')) {
+                const insertForm = document.createElement('div');
+                insertForm.className = 'input-group';
+                insertForm.id = 'insertionForm';
+                insertForm.innerHTML = `
+                    <input type="number" id="insertKey" placeholder="Enter key to insert:" />
+                    <button onclick="insertKey()">Insert</button>
+                    <div id="insertStatus" class="message-container"></div>
+                `;
+                buttonContainer.appendChild(insertForm);
+            }
+        }
+
+        // Call this function on page load to add the insertion form
+        document.addEventListener('DOMContentLoaded', function() {
+            setupInsertionForm();
+            
+            // Add styles for node highlighting during animation
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes pulse {
+                    0% { filter: drop-shadow(0px 0px 5px rgba(255, 165, 0, 0.7)); }
+                    50% { filter: drop-shadow(0px 0px 15px rgba(255, 165, 0, 1)); }
+                    100% { filter: drop-shadow(0px 0px 5px rgba(255, 165, 0, 0.7)); }
+                }
+                
+                .node circle.highlighted {
+                    animation: pulse 1s infinite;
+                }
+                
+                .temp-node {
+                    filter: drop-shadow(0px 0px 8px rgba(255, 255, 0, 0.7));
+                }
+            `;
+            document.head.appendChild(style);
+            
+            // Load the tree initially if available
+            loadTree();
+        });
+
+        
+        async function initializeTree() {
+            const treeType = document.getElementById("treeTypeSelect").value;
+            const statusElement = document.getElementById("initStatus");
+            
+            try {
+                console.log(`Initializing new ${treeType}`);
+                statusElement.innerHTML = '<div class="status-message">Creating new empty tree...</div>';
+                
+                const response = await fetch("http://127.0.0.1:5000/initialize", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ type: treeType })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    statusElement.innerHTML = '<div class="status-message success-message">✅ Empty tree created successfully!</div>';
+                    
+                    // Force reload the tree data from server to ensure UI is synchronized with backend
+                    setTimeout(() => loadTree(), 300);
+                    
+                    // Reset other statuses
+                    if (document.getElementById("searchResult")) {
+                        document.getElementById("searchResult").textContent = "";
+                    }
+                    
+                    setTimeout(() => {
+                        if (statusElement.innerHTML.includes("created successfully")) {
+                            statusElement.innerHTML = '';
+                        }
+                    }, 5000);
+                } else {
+                    statusElement.innerHTML = '<div class="status-message error-message">❌ Error: ' + 
+                        (data.error || "Unknown error occurred") + '</div>';
+                }
+            } catch (err) {
+                console.error("Initialization error:", err);
+                statusElement.innerHTML = '<div class="status-message error-message">❌ Failed to initialize: ' + 
+                    err.message + '</div>';
+            }
+        }
+
+        async function startTraversal(type) {
+            const resultContainer = document.getElementById("traversalResult");
+            resultContainer.textContent = `Running ${type} traversal...`;
+
+            const res = await fetch("http://127.0.0.1:5000/traverse", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ type })
+            });
+
+            const data = await res.json();
+            const traversal = data.traversal;
+
+            function formatTraversalType(type) {
+                return type
+                    .replace(/(order)/i, ' Order')      // Adds space before "Order"
+                    .replace(/^./, c => c.toUpperCase()); // Capitalizes the first letter
+            }
+
+            const capitalizedType = formatTraversalType(type);
+            resultContainer.textContent = `The ${capitalizedType} Traversal is : ${traversal.join(', ')}`;
+
+
+            // Flash nodes in order
+            const svg = d3.select("svg");
+            for (let key of traversal) {
+                svg.selectAll(".node circle")
+                    .filter(d => d.key === key)
+                    .transition()
+                    .duration(300)
+                    .style("fill", "red")
+                    .transition()
+                    .duration(300)
+                    .style("fill", d => {
+                        if (!d.parent) return "#a3e9c1"; // Root node: green
+                        if (d.isLeft) return "#9cdff5";  // Left child: blue
+                        return "#f5b855";                // Right child: brown
+                    });
+                await new Promise(r => setTimeout(r, 600));
+            }
+        }
+
+
+    </script>
+</body>
+</html>
