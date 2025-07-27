@@ -1,0 +1,5 @@
+1. Python 3.x/ Visual Studio Code
+2. Flask (pip install flask)
+3. Flask-CORS (pip install flask_cors)
+4. A modern browser (Chrome, Edge, Firefox)
+5. Live Server extension in VS Code or any live server tool
