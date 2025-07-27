@@ -27,6 +27,12 @@ A Python-based interactive Tree Visualizer that dynamically displays **Binary Se
 ▶️ [Live Demo](https://drive.google.com/file/d/145pup4iEzYwx7no16rb4Fl9jO7P0NyKN/view?usp=sharing)
 
 ---
+---
+### **Steps to Run Locally**
+1. Start the Backend Server by running the command in Terminal - python backend.py. This runs the Flask backend on http://127.0.0.1:5000.
+2. Start the Frontend (Tree UI) - Open treeui.html in Live Server
+
+-----
 
 ## Installation
 
@@ -35,7 +41,4 @@ A Python-based interactive Tree Visualizer that dynamically displays **Binary Se
 git clone https://github.com/your-username/tree-visualizer.git
 cd tree-visualizer
 
----
-### **Steps to Run Locally**
-1. Start the Backend Server by running the command in Terminal - python backend.py. This runs the Flask backend on http://127.0.0.1:5000.
-2. Start the Frontend (Tree UI) - Open treeui.html in Live Server
+
